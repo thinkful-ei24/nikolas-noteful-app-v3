@@ -106,7 +106,7 @@ router.delete('/:id', (req, res, next) => {
       return Note.findByIdAndRemove(id); 
     })
     .then(results => {
-      res.status(204).json(results);
+      res.status(204).end();
     
     })
     .catch(err => {
