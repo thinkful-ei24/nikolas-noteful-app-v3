@@ -38,7 +38,7 @@ describe('Basic Express setup', () => {
 
     it('GET request "/" should return the index page', () => {
       return chai.request(app)
-        .get('/')
+        .get('/api/notes')
         .then(function (res) {
           expect(res).to.exist;
           expect(res).to.have.status(200);

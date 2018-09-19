@@ -11,24 +11,15 @@ router.get('/', (req, res, next) => {
   let {searchTerm} = req.query;
 
   console.log(req.params);
-  // res.json([
-  //   { id: 1, title: 'Temp 1' },
-  //   { id: 2, title: 'Temp 2' },
-  //   { id: 3, title: 'Temp 3' }
-  // ]);
+  
   if (searchTerm) {
-    mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-      .then(() => {
-        return Note.find({$or: [
-          {title:  { $regex: searchTerm, $options: 'i' }},
-          {content: { $regex: searchTerm, $options: 'gi'}},
-        ]}).sort({ updatedAt: 'desc' });
-      })
+
+    return Note.find({$or: [
+      {title:  { $regex: searchTerm, $options: 'i' }},
+      {content: { $regex: searchTerm, $options: 'gi'}},
+    ]}).sort({ updatedAt: 'desc' })
       .then(results => {
         res.json(results);
-      })
-      .then(() => {
-        return mongoose.disconnect();
       })
       .catch(err => {
         console.error(`ERROR: ${err.message}`);
@@ -37,15 +28,9 @@ router.get('/', (req, res, next) => {
   }
   
   if(!(searchTerm)) {
-    mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-      .then(() => {
-        return Note.find();
-      })
+    return Note.find()
       .then(results => {
         res.json(results);
-      })
-      .then(() => {
-        return mongoose.disconnect();
       })
       .catch(err => {
         console.error(`ERROR: ${err.message}`);
@@ -59,18 +44,14 @@ router.get('/', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
 
-  mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-    .then(() => {
-      const {id} = req.params;
 
-      return Note.findById(id
-      );
-    })
+  const {id} = req.params;
+
+  return Note.findById(id
+  )
+
     .then(results => {
       res.json(results);
-    })
-    .then(() => {
-      return mongoose.disconnect();
     })
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
@@ -81,18 +62,15 @@ router.get('/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
-  mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-    .then(() => {
-      let newObj = req.body;
 
-      return Note.create(newObj); 
-    })
+  let newObj = req.body;
+
+  return Note.create(newObj)
+
     .then(results => {
-      res.json(results);
+      
+      res.status(201).json(results);
     
-    })
-    .then(() => {
-      return mongoose.disconnect();
     })
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
@@ -106,15 +84,11 @@ router.put('/:id', (req, res, next) => {
 
   const id = req.params.id;
   const newObj = req.body;
-  mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-    .then(() => {
-      return Note.findByIdAndUpdate(id, newObj, {new: true}); 
-    })
+
+  return Note.findByIdAndUpdate(id, newObj, {new: true})
+
     .then(results => {
       res.json(results);
-    })
-    .then(() => {
-      return mongoose.disconnect();
     })
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
@@ -132,11 +106,8 @@ router.delete('/:id', (req, res, next) => {
       return Note.findByIdAndRemove(id); 
     })
     .then(results => {
-      res.json(results);
+      res.status(204).json(results);
     
-    })
-    .then(() => {
-      return mongoose.disconnect();
     })
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
