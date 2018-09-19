@@ -66,26 +66,26 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
 
 //CREATE INTO NOTES
 
-// mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-//   .then(() => {
+mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
+  .then(() => {
 
-//     let newObj = {
-//       title: 'lorem',
-//       content: 'some content'
-//     };
-//     return Note.create(newObj); 
-//   })
-//   .then(results => {
-//     console.log(results);
+    let newObj = {
+      title: 'lorem',
+      content: 'some content'
+    };
+    return Note.create(newObj); 
+  })
+  .then(results => {
+    console.log(results);
     
-//   })
-//   .then(() => {
-//     return mongoose.disconnect();
-//   })
-//   .catch(err => {
-//     console.error(`ERROR: ${err.message}`);
-//     console.error(err);
-//   });
+  })
+  .then(() => {
+    return mongoose.disconnect();
+  })
+  .catch(err => {
+    console.error(`ERROR: ${err.message}`);
+    console.error(err);
+  });
 
 // NOTE.findByIdAndUpdate
 // mongoose.connect(MONGODB_URI, { useNewUrlParser:true })

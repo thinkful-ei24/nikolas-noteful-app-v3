@@ -17,5 +17,3 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
   });
 
 
-// mongoose.connect(MONGODB_URI, {useNewUrlParser:true})
-//   .then(() =>)
