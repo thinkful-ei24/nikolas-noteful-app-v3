@@ -12,7 +12,7 @@ const { notes } = require('../db/seed/notes');
 const expect = chai.expect;
 chai.use(chaiHttp);
 
-const newLocal = 'DELETE REQUEST TO /api/notes/:id';
+
 describe.only('hooks', function() {
 
   before(function() {
@@ -146,4 +146,3 @@ describe.only('hooks', function() {
   });
 });
 
-//dog
