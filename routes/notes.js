@@ -110,14 +110,10 @@ router.put('/:id', (req, res, next) => {
 // /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
-  mongoose.connect(MONGODB_URI, { useNewUrlParser:true })
-    .then(() => {
      
-      return Note.findByIdAndRemove(id); 
-    })
-    .then(results => {
+  return Note.findByIdAndRemove(id) 
+    .then(res => {
       res.status(204).end();
-    
     })
     .catch(err => {
       console.error(`ERROR: ${err.message}`);

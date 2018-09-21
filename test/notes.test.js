@@ -37,23 +37,23 @@ describe('hooks', function() {
 
   // test cases
   
-  describe('Notes API Resource', function() {
-    describe('GET REQUEST TO /api/notes/', function() {
-      it('Should return all notes to the api', function() {
-        let res;
-        return chai.request(app)
-          .get('/api/notes')
-          .then(_res => {
-            res = _res;
-            expect(res.body).to.be.a('array');
-            expect(res).to.have.status(200);
-            return Note.find();
-          }).then(document => {
-            expect(document.length).to.eql(res.body.length);
-          });
-      });
+
+  describe('GET REQUEST TO /api/notes/', function() {
+    it('Should return all notes to the api', function() {
+      let res;
+      return chai.request(app)
+        .get('/api/notes')
+        .then(_res => {
+          res = _res;
+          expect(res.body).to.be.a('array');
+          expect(res).to.have.status(200);
+          return Note.find();
+        }).then(document => {
+          expect(document.length).to.eql(res.body.length);
+        });
     });
   });
+  
 
   describe('GET /api/notes/:id', function () {
     it('should return correct note', function () {
@@ -106,45 +106,75 @@ describe('hooks', function() {
 
 
   describe('PUT REQUEST TO /api/notes/:id', function() {
-    it('Should change an existing object to one with new shit', function() {
+    it('Should change an existing object to one with new stuff', function() {
       
       const newObj = {
         'title': 'test4',
         'content': 'test6',
         'folderId': '111111111111111111111100'
       };
+
+      let data1;
       return Note.findOne()
         .then(data => {
+          data1 = data;
           return chai.request(app)
             .put(`/api/notes/${data.id}`)
-            .send(newObj)
-            .then((res)=> {
-              expect(res).to.have.status(200);
-              return Note.findById(data.id);
-            })
-            .then((res) => {
-              console.log(res);
-              expect(res.title).to.equal(newObj.title);
-              expect(res.content).to.equal(newObj.content);
-            });
+            .send(newObj);
+        })
+        .then((res)=> {
+          expect(res).to.have.status(200);
+          return Note.findById(data1.id);
+        })
+        .then((res) => {
+          console.log(res);
+          expect(res.title).to.equal(newObj.title);
+          expect(res.content).to.equal(newObj.content);
         });
     });
   });
 
-  describe('DELETE REQUEST TO /api/notes/:id', function() {
-    it('Should delete an existing object from the database per request', function() {
-      let oldNote;
-      return Note.findOne()
-        .then(note => {
-          oldNote = note;
-          return chai.request(app)
-            .delete(`/api/notes/${oldNote.id}`)
-            .then(res => {
-              expect(res).to.have.status(204);
-              expect(Note.findById(oldNote.id).id).to.eql(undefined);
-            });
-        });
+  // describe('DELETE REQUEST TO /api/notes/:id', function() {
+  //   it('Should delete an existing object from the database per request', function() {
+  //     let oldNote;
+  //     return Note.findOne()
+  //       .then(note => {
+  //         oldNote = note;
+  //         return chai.request(app)
+  //           .delete(`/api/notes/${oldNote.id}`);
+  //       })
+  //       .then(res => {
+  //         expect(res).to.have.status(204);
+  //         // expect(Note.findById(oldNote.id)).to.eql(undefined);
+  //       });
+  //   });
+  // });
+
+  describe('DELETE endpoints', function() {
+    it('should delete a note by id', function() {
+      //create empty variable note to store our result in this scope
+      let note;
+
+      //find a note and pass it into response
+      return (
+        Note.findOne()
+          .then(foundNote => {
+            //set note variable to note object in response
+            note = foundNote;
+            return chai.request(app).delete(`/api/notes/${note.id}`);
+          })
+          .then(response => {
+            expect(response).to.have.status(204);
+            return Note.findById(note.id);
+          })
+          //look in DB and make sure the passed in note is gone.
+          .then(response => {
+            expect(response).to.be.null;
+          })
+      );
     });
   });
+  
 });
+
 

@@ -20,15 +20,15 @@ describe('Notes API Resource', function() {
 
 
   before(function() {
-    return mongoose.connect(TEST_MONGODB_URI);
-    //   .then(() => mongoose.connection.db.dropDatabase());
+    return mongoose.connect(TEST_MONGODB_URI)
+      .then(() => mongoose.connection.db.dropDatabase());
   });
               
   beforeEach(function() {
-    return Folder.insertMany(folders);
-    // .then(() => {
-    //   Folder.createIndexes();
-    // });
+    return Folder.insertMany(folders)
+      .then(() => {
+        Folder.createIndexes();
+      });
   });
               
   afterEach(function() {
