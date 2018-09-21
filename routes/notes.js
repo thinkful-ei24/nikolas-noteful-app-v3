@@ -112,9 +112,7 @@ router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
      
   return Note.findByIdAndRemove(id) 
-    .then(res => {
-      res.status(204).end();
-    })
+    .then(res.status(204).end())
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
       next(err);
