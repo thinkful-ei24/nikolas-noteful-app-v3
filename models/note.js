@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
+
 const noteSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: String,
-  updatedAt : Date,
-  createdAt : Date
+  folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder' }
 });
 
 // Add `createdAt` and `updatedAt` fields

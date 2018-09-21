@@ -8,36 +8,31 @@ const Note = require('../models/note');
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
 
-  let {searchTerm} = req.query;
+  let {searchTerm, folderId} = req.query;
+  
 
   console.log(req.params);
   
+  let filter = {};
+
+  const re = new RegExp(searchTerm, 'gi');
+
   if (searchTerm) {
-
-    return Note.find({$or: [
-      {title:  { $regex: searchTerm, $options: 'i' }},
-      {content: { $regex: searchTerm, $options: 'gi'}},
-    ]}).sort({ updatedAt: 'desc' })
-      .then(results => {
-        res.json(results);
-      })
-      .catch(err => {
-        console.error(`ERROR: ${err.message}`);
-        console.error(err);
-      });
-  }
-  
-  if(!(searchTerm)) {
-    return Note.find()
-      .then(results => {
-        res.json(results);
-      })
-      .catch(err => {
-        console.error(`ERROR: ${err.message}`);
-        console.error(err);
-      });
+    filter = { $or: [{title: {$regex: re}}, {content: { $regex: re}}]};
   }
 
+  if (folderId) {
+    filter.folderId = folderId;
+  }
+
+  return Note.find(filter).sort({ updatedAt: 'desc' })
+    .then(results => {
+      res.json(results);
+    })
+    .catch(err => {
+      console.error(`ERROR: ${err.message}`);
+      next(err);
+    });
 });
 
 
@@ -65,18 +60,26 @@ router.post('/', (req, res, next) => {
 
   let newObj = req.body;
 
-  return Note.create(newObj)
+  
 
-    .then(results => {
+  if(!(req.body.folderId) || mongoose.Types.ObjectId.isValid(req.body.folderId)) {
+
+    return Note.create(newObj)
+
+      .then(results => {
       
-      res.status(201).json(results);
+        res.status(201).json(results);
     
-    })
-    .catch(err => {
-      console.error(`ERROR: ${err.message}`);
-      next(err);
-    });
-
+      })
+      .catch(err => {
+        console.error(`ERROR: ${err.message}`);
+        next(err);
+      });
+  } else {
+    const err = new Error('Invalid Folder ID');
+    err.status = 404;
+    return next(err);
+  }
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
@@ -85,16 +88,23 @@ router.put('/:id', (req, res, next) => {
   const id = req.params.id;
   const newObj = req.body;
 
-  return Note.findByIdAndUpdate(id, newObj, {new: true})
+  if(!(req.body.folderId) || mongoose.Types.ObjectId.isValid(req.body.folderId)) {
 
-    .then(results => {
-      res.json(results);
-    })
-    .catch(err => {
-      console.error(`ERROR: ${err.message}`);
-      next(err);
-    });
+    return Note.findByIdAndUpdate(id, newObj, {new: true})
 
+      .then(results => {
+        res.json(results);
+      })
+      .catch(err => {
+        console.error(`ERROR: ${err.message}`);
+        next(err);
+      });
+
+  } else {
+    const err = new Error('Invalid Folder ID');
+    err.status = 404;
+    return next(err);
+  }
 });
 
 // /* ========== DELETE/REMOVE A SINGLE ITEM ========== */

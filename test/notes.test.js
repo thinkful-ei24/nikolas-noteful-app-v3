@@ -70,7 +70,7 @@ describe('hooks', function() {
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'title', 'content', 'createdAt', 'updatedAt');
+          expect(res.body).to.include.keys('id', 'title', 'content', 'createdAt', 'updatedAt', 'folderId');
 
           // 3) then compare database results to API response
           expect(res.body.id).to.equal(data.id);
@@ -87,7 +87,8 @@ describe('hooks', function() {
     it('Should return the new object to the api', function () {
       let newObj = {
         'title': 'this is a test1',
-        'content': 'this is a content1'
+        'content': 'this is a content1',
+        'folderId': '111111111111111111111100'
       };
       return chai.request(app)
         .post('/api/notes')
@@ -109,7 +110,8 @@ describe('hooks', function() {
       
       const newObj = {
         'title': 'test4',
-        'content': 'test6'
+        'content': 'test6',
+        'folderId': '111111111111111111111100'
       };
       return Note.findOne()
         .then(data => {
