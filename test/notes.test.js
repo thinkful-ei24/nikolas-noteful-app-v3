@@ -162,6 +162,7 @@ describe('hooks', function() {
             //set note variable to note object in response
             note = foundNote;
             return chai.request(app).delete(`/api/notes/${note.id}`);
+            
           })
           .then(response => {
             expect(response).to.have.status(204);
