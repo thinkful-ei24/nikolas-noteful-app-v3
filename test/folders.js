@@ -15,7 +15,7 @@ chai.use(chaiHttp);
 
 
 
-describe.skip('Notes API Resource', function() {
+describe('Notes API Resource', function() {
        
 
 
