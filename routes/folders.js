@@ -23,7 +23,7 @@ router.get('/', (req, res, next) => {
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
   if (mongoose.Types.ObjectId.isValid(id)) {
-    return Folders.findOne({_id: `${id}`})
+    return Folders.findById(id)
       .then(folder => {
         res.status(200).json(folder);
       }).catch(err => {

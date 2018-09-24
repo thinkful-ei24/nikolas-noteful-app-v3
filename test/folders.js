@@ -47,7 +47,7 @@ describe('Notes API Resource', function() {
         Folder.find(),
         chai.request(app).get('/api/folders')
       ]).then(([data, res]) => {
-        expect(data).to.be.a('array');
+        expect(data[0]).to.be.a('object');
         expect(res).to.be.json;
         expect(res.body).to.have.length(data.length);
       });
@@ -64,8 +64,11 @@ describe('Notes API Resource', function() {
             return chai.request(app).get(`/api/folders/${folderObj.id}`);
           })
       ]).then(([folderObject]) => {
+        console.log(folderObject);
+        expect(folderObject.body).to.be.a('object');
         expect(folderObject).to.have.status(200);
         expect(folderObject).to.be.json;
+        console.log(folderObject.body.id);
         expect(folderObject.body.id).to.eql(data.id);
         expect(folderObject.body.name).to.eql(data.name);
       });
