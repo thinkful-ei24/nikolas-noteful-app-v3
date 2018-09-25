@@ -3,11 +3,12 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { MONGODB_URI } = require('../config');
 const Folders = require('../models/folders');
-
+const passport = require('passport');
+router.use(passport.authenticate('jwt', { session: false, failWithError: true })); //Use the jwt auth on each call within router
 // GET all /folders
 // Sort by name
 
-router.get('/', (req, res, next) => {
+router.get('/',  (req, res, next) => {
   return Folders.find().sort({'name': 1})
     .then((folders) => {
       res.status(200).json(folders);

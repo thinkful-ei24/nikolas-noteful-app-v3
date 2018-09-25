@@ -17,7 +17,7 @@ userSchema.statics.hashPassword = function (password) {
 };
 
 userSchema.set('toObject', {
-  virtuals: true,
+  virtuals: true, //returns regular id in this scenario
   versionKey: false,
   transform: (doc, result) => {
     delete result._id;
@@ -25,6 +25,8 @@ userSchema.set('toObject', {
     delete result.password;
   }
 });
+
+
 
 
 

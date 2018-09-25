@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Tag = require('../models/tags');
-
+const passport = require('passport');
+router.use(passport.authenticate('jwt', { session: false, failWithError: true })); 
 
 // GET all /tags
 // Sort the response by name
