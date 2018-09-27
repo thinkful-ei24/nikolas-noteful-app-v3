@@ -83,6 +83,7 @@ describe('hooks', function() {
       });
     });
   
+    //hello
 
     describe('GET /api/notes/:id', function () {
       it('should return correct note', function () {
