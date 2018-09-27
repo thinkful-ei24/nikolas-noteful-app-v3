@@ -61,6 +61,10 @@ describe('hooks', function() {
       User.deleteMany()
     ]);
   });
+
+  after(function() {
+    return mongoose.disconnect();
+  });
   // test cases
   
 
