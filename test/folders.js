@@ -1,39 +1,62 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
+const sinon = require('sinon');
 
 const app = require('../server');
 const { TEST_MONGODB_URI } = require('../config');
-
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config');
+const User = require('../models/user');
 const Folder = require('../models/folders');
+const Note = require('../models/note');
+
 
 const { folders } = require('../db/seed/folders');
+const { users } = require('../db/seed/users');
 
-const expect = chai.expect;
 chai.use(chaiHttp);
+const expect = chai.expect;
+const sandbox = sinon.createSandbox();
 
 
 
 
 describe('Notes API Resource', function() {
        
-
+  let token;
+  let user;
 
   before(function() {
     return mongoose.connect(TEST_MONGODB_URI)
-      .then(() => mongoose.connection.db.dropDatabase());
-  });
-              
-  beforeEach(function() {
-    return Folder.insertMany(folders)
       .then(() => {
-        Folder.createIndexes();
+        return Promise.all([
+          Note.deleteMany(), 
+          Folder.deleteMany(),
+          User.deleteMany()
+        ]);
       });
   });
               
-  afterEach(function() {
-    return mongoose.connection.db.dropDatabase();
+  beforeEach(function () {
+    return Promise.all([
+      User.insertMany(users),
+      Folder.insertMany(folders),
+      Folder.createIndexes()
+    ])
+      .then(([users]) => {
+        user = users[0];
+        token = jwt.sign({ user }, JWT_SECRET, { subject: user.username });
+      });
+  });
               
+  afterEach(function () {
+    sandbox.restore();
+    return Promise.all([
+      Note.deleteMany(), 
+      Folder.deleteMany(),
+      User.deleteMany()
+    ]);
   });
               
   after(function() {
@@ -45,7 +68,7 @@ describe('Notes API Resource', function() {
     it('should get all folders', function () {
       return Promise.all([
         Folder.find(),
-        chai.request(app).get('/api/folders')
+        chai.request(app).get('/api/folders').set('Authorization', `Bearer ${token}`)
       ]).then(([data, res]) => {
         expect(data[0]).to.be.a('object');
         expect(res).to.be.json;
@@ -57,21 +80,21 @@ describe('Notes API Resource', function() {
   describe('GET /api/folders/:id', function () {
     it('should get a folder by id', function () {
       let data;
-      return Promise.all([
-        Folder.findOne()
-          .then(folderObj => {
-            data = folderObj;
-            return chai.request(app).get(`/api/folders/${folderObj.id}`);
-          })
-      ]).then(([folderObject]) => {
-        console.log(folderObject);
-        expect(folderObject.body).to.be.a('object');
-        expect(folderObject).to.have.status(200);
-        expect(folderObject).to.be.json;
-        console.log(folderObject.body.id);
-        expect(folderObject.body.id).to.eql(data.id);
-        expect(folderObject.body.name).to.eql(data.name);
-      });
+      return  Folder.findOne({userId: user.id})       
+        .then((folderObject) => {
+          data = folderObject;
+          // console.log(folderObject);
+          expect(folderObject).to.be.a('object');
+          console.log(folderObject.id);
+          expect(folderObject.id).to.eql(data.id);
+          expect(folderObject.name).to.eql(data.name);
+          return chai.request(app).get(`/api/folders/${data.id}`).set('Authorization', `Bearer ${token}`);
+        }).then((response) => {
+          expect(response).to.be.a('object');
+          console.log(response.status);
+          console.log(response.body);
+          expect(response.body.id).to.eql(data.id);
+        });
     });
   });
 
@@ -82,6 +105,7 @@ describe('Notes API Resource', function() {
       };
       return chai.request(app)
         .post('/api/folders')
+        .set('Authorization', `Bearer ${token}`)
         .send(newObj)
         .then((res) => {
           expect(res).to.have.status(201);
@@ -106,6 +130,7 @@ describe('Notes API Resource', function() {
           id = obj.id;
           return chai.request(app)
             .put(`/api/folders/${id}`)
+            .set('Authorization', `Bearer ${token}`)
             .send(updateObj)
             .then(res => {
               expect(res).to.have.status(201);
@@ -132,6 +157,7 @@ describe('Notes API Resource', function() {
           id = obj.id;
           return chai.request(app)
             .delete(`/api/folders/${id}`)
+            .set('Authorization', `Bearer ${token}`)
             .then((res) => {
               expect(res).to.have.status(204);
               expect(Folder.findById(object.id).id).to.eql(undefined);

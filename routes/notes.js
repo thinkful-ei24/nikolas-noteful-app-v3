@@ -8,6 +8,65 @@ const Folders = require('../models/folders');
 const Tag = require('../models/tags');
 const passport = require('passport');
 router.use(passport.authenticate('jwt', { session: false, failWithError: true })); 
+
+
+const validateFolderId = function(folderId, userId) {
+  if(!(folderId)) {
+    return Promise.resolve();
+  }
+  if(folderId) {
+    if(!mongoose.Types.ObjectId.isValid(folderId)) {
+      const err = new Error('The folder id is not valid!!');
+      err.status = 400;
+      return Promise.reject(err);
+    }
+
+    return Folders.count({_id: folderId, userId})
+      .then((count) => {
+        console.log(count);
+        if(count !== 0) {
+          return Promise.resolve;
+        } else {
+          const err = new Error('Folder doesnt exist in user!');
+          err.status = 404;
+          return Promise.reject(err);
+        }
+      });
+  }  
+};
+
+const validateTagsId = function(tags, userId) {
+  if(!(tags)) {
+    return Promise.resolve();
+  }
+
+  if(tags) {
+
+    if(!Array.isArray(tags)) {
+      const err = new Error('This is not an array!');
+      err.status = 400;
+      return Promise.reject(err);
+    }
+
+    tags.forEach(tag => {
+      if(!mongoose.Types.ObjectId.isValid(tag)) {
+        const err = new Error('Bad tag!');
+        err.status = 404;
+        return Promise.reject(err);
+      }
+
+      Tag.find({_id: {$in: tags}, userId}).count()
+        .then(tagCount => {
+          if(tagCount !== tags.length) {
+            const err = new Error('An id in `tags` does not exist.');
+            err.status = 404;
+            return Promise.reject(err);
+          }
+        });
+    });
+  } 
+};
+
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
 
@@ -84,113 +143,48 @@ router.post('/', (req, res, next) => {
 
   console.log(userId);
   // console.log(tags);
-
-  if(req.body.folderId) {
-    if(!mongoose.Types.ObjectId.isValid(req.body.folderId)) {
-      const err = new Error('The folder id is not valid!!');
-      err.status = 400;
-      next(err);
-    }
-
-    Folders.findOne({_id: folderId, userId})
-      .then((folder) => {
-        console.log('poop');
-        if(!(folder)) {
-          const err = new Error('Folder doesnt exist in user!');
-          err.status = 404;
-          next(err);
-        }
-      });
-  }
-  
-  if(tags) {
-
-    if(!Array.isArray(tags)) {
-      const err = new Error('This is not an array!');
-      err.status = 400;
-      next(err);
-    }
-
-    tags.forEach(tag => {
-      if(!mongoose.Types.ObjectId.isValid(tag)) {
-        const err = new Error('Bad tag!');
-        err.status = 404;
-        next(err);
-      }
-
-      Tag.find({_id: {$in: req.body.tags}, userId}).count()
-        .then(tagCount => {
-          if( tagCount !== tags.length) {
-            const err = new Error('An id in `tags` does not exist.');
-            err.status = 404;
-            return next(err);
-          }
-          else return next();
-        })
-        .catch(err => next(err));
-        
-    });
-  } 
-
-  
-    
-  if(!(req.body.folderId) || mongoose.Types.ObjectId.isValid(req.body.folderId)) {
-
-    return Note.create(newObj)
-      .then(results => {
-        res.status(201).json(results);
-    
-      })
-      .catch(err => {
-        console.error(`ERROR: ${err.message}`);
-        next(err);
-      });
-  } else {
-    const err = new Error('Invalid Folder ID');
-    err.status = 404;
-    return next(err);
-  }
+   
+  return Promise.all([
+    validateFolderId(folderId, userId),
+    validateTagsId(tags, userId)
+  ])
+    .then(() => {
+      return Note.create(newObj);
+    })
+    .then(results => {
+      res.status(201).json(results);
+    })
+    .catch(err => {
+      console.error(`ERROR: ${err.message}`);
+      return next(err);
+    });  
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/:id', (req, res, next) => {
 
-  const id = req.params.id;
-  const newObj = req.body;
+  const { id } = req.params;
+  let newObj = req.body;
   const userId = req.user.id;
-  
-
-
   const tags = req.body.tags;
+  const folderId = req.body.folderId;
+  newObj.userId = userId;
 
   console.log(tags);
 
-  if(tags) {
-    tags.forEach(tag => {
-      if(!mongoose.Types.ObjectId.isValid(tag)) {
-        const err = new Error('Bad tag!');
-        err.status = 404;
-        next(err);
-      }
-    });
-  } 
-
-  if(!(req.body.folderId) || mongoose.Types.ObjectId.isValid(req.body.folderId)) {
-
-    return Note.findOneAndUpdate({_id: id, userId}, newObj, {new: true})
-      .then(results => {
-        res.json(results);
-      })
-      .catch(err => {
-        console.error(`ERROR: ${err.message}`);
-        next(err);
-      });
-
-  } else {
-    const err = new Error('Invalid Folder ID');
-    err.status = 404;
-    return next(err);
-  }
+  return Promise.all([
+    validateFolderId(folderId, userId),
+    validateTagsId(tags, userId)
+  ])
+    .then(() => {
+      return Note.findOneAndUpdate({'userId': userId, '_id': id }, newObj, {new: true});
+    })
+    .then(results => {
+      res.status(201).json(results);  
+    }).catch(err => {
+      console.error(`ERROR: ${err.message}`);
+      return next(err);
+    });  
 });
 
 
@@ -203,7 +197,7 @@ router.delete('/:id', (req, res, next) => {
     .then(res.status(204).end())
     .catch(err => {
       console.error(`ERROR: ${err.message}`);
-      next(err);
+      return next(err);
     });
 });
 

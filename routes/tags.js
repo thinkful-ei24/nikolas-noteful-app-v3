@@ -11,7 +11,7 @@ router.get('/', (req, res, next) => {
   console.log('hi');
   const userId = req.user.id;
   console.log(userId);
-  return Tag.find({userId}).sort('-name')
+  return Tag.find({userId})
     .then(response => {
       return res.json(response);
     }).catch((err) => {
@@ -83,7 +83,7 @@ router.put('/:id', (req, res, next) => {
     next(err);
   }
     
-  return Tag.findOne({_id: req.params.id, userId}, req.body, {new: true})
+  return Tag.findOneAndUpdate({_id: req.params.id, userId}, req.body, {new: true})
     .then(response => {
       res.status(201).json(response);
     }).catch(err => {

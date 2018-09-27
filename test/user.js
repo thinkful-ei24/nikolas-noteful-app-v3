@@ -11,7 +11,7 @@ const expect = chai.expect;
 
 chai.use(chaiHttp);
 
-describe.only('Noteful API - Users', function () {
+describe('Noteful API - Users', function () {
   const username = 'exampleUser';
   const password = 'examplePass';
   const fullname = 'Example User';
@@ -33,7 +33,7 @@ describe.only('Noteful API - Users', function () {
     return mongoose.disconnect();
   });
   
-  describe.only('/api/users', function () {
+  describe('/api/users', function () {
     describe('POST', function () {
       it('Should create a new user', function () {
         const testUser = { username, password, fullname };
@@ -45,7 +45,6 @@ describe.only('Noteful API - Users', function () {
           .send(testUser)
           .then(_res => {
             res = _res;
-            console.log(res);
             expect(res).to.have.status(201);
             expect(res.body).to.be.an('object');
             expect(res.body).to.have.keys('id', 'username', 'fullname');
@@ -87,7 +86,7 @@ describe.only('Noteful API - Users', function () {
       it('Should reject users with non-string username', () =>{
         return chai.request(app).post('/api/users/').send({username: 12301203, password: 'poop'})
           .then((res) => {
-            console.log(res);
+            
             expect(res).to.have.status(422);
             expect(res.body.message).to.include('Username or Password cannot only be numbers');
           });
@@ -117,7 +116,7 @@ describe.only('Noteful API - Users', function () {
     it('Should reject users with empty username', () => {
       return chai.request(app).post('/api/users/').send({username: '', password: 'poop123123'})
         .then((res) => {
-          console.log(res);
+          
           expect(res).to.have.status(404);
           expect(res.body.message).to.include('Username has to be at least 1 character!');
         });
@@ -125,7 +124,7 @@ describe.only('Noteful API - Users', function () {
     it('Should reject users with password less than 8 characters', () => {
       return chai.request(app).post('/api/users/').send({username: 'hellomojo', password: 'poop'})
         .then((res) => {
-          console.log(res);
+        
           expect(res).to.have.status(404);
           expect(res.body.message).to.include('Password does not meet required length. (At least 8 characters and no more than 72)');
         });
@@ -133,7 +132,7 @@ describe.only('Noteful API - Users', function () {
     it('Should reject users with password greater than 72 characters', () => {
       return chai.request(app).post('/api/users/').send({username: 'thisisanewusername', password: 'sahdfjkhdsajfhjksadhfjkhsadkjfjksadhfjkhksdhfkjhdsjkhkjsadhfkjhsakjdfhkjsadhfkjhsakjdfhkjasdhfkahskjdfhkjsadhfahkjsad'})
         .then((res) => {
-          console.log(res);
+     
           expect(res).to.have.status(404);
           expect(res.body.message).to.include('Password does not meet required length. (At least 8 characters and no more than 72)');
         });
@@ -154,12 +153,10 @@ describe.only('Noteful API - Users', function () {
       return chai.request(app).post('/api/users/').send({username: 'jsdflajsdf', password: 'pooasdfasdp', fullname: ' Nikolas Melgarejo '})
         .then((_res) => {
           res = _res;
-          console.log(res);
+  
           expect(res).to.have.status(201);
           return User.findOne({_id: res.body.id});
         }).then((response) => {
-            
-          console.log(res.username);
           expect(response).to.be.a('object');
           expect(response.username).to.eql(res.body.username);
           expect(response.fullname).to.eql(res.body.fullname);

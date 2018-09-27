@@ -1,32 +1,66 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
+const sinon = require('sinon');
 
 const app = require('../server');
 const { TEST_MONGODB_URI } = require('../config');
-
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config');
+const User = require('../models/user');
 const Tag = require('../models/tags');
 
-const { tags } = require('../db/seed/tags');
+const Folder = require('../models/folders');
+const Note = require('../models/note');
 
-const expect = chai.expect;
+const { tags } = require('../db/seed/tags');
+const { folders } = require('../db/seed/folders');
+const { users } = require('../db/seed/users');
+
 chai.use(chaiHttp);
+const expect = chai.expect;
+const sandbox = sinon.createSandbox();
+
 
 describe('tags routers', function () {
+  let token;
+  let user;
+
   before(function() {
     return mongoose.connect(TEST_MONGODB_URI)
-      .then(() => mongoose.connection.db.dropDatabase());
+      .then(() => {
+        return Promise.all([
+          Note.deleteMany(), 
+          Tag.deleteMany(),
+          Folder.deleteMany(),
+          User.deleteMany()
+        ]);
+      });
   });
-        
-  beforeEach(function() {
-    return Tag.insertMany(tags);
+              
+  beforeEach(function () {
+    return Promise.all([
+      User.insertMany(users),
+      Tag.insertMany(tags),
+      Folder.insertMany(folders),
+      Folder.createIndexes()
+    ])
+      .then(([users]) => {
+        user = users[0];
+        token = jwt.sign({ user }, JWT_SECRET, { subject: user.username });
+      });
   });
-        
-  afterEach(function() {
-    return mongoose.connection.db.dropDatabase();
-        
+              
+  afterEach(function () {
+    sandbox.restore();
+    return Promise.all([
+      Note.deleteMany(), 
+      Tag.deleteMany(),
+      Folder.deleteMany(),
+      User.deleteMany()
+    ]);
   });
-        
+              
   after(function() {
     return mongoose.disconnect();
   });
@@ -34,9 +68,10 @@ describe('tags routers', function () {
   describe('GET all request to root /api/tags', function () {
     it('should return all the tags', function () {
       return Promise.all([
-        Tag.find(),
-        chai.request(app).get('/api/tags')
+        Tag.find({userId: user.id}),
+        chai.request(app).get('/api/tags').set('Authorization', `Bearer ${token}`)
       ]).then(([dbData, apiData]) => {
+        console.log(dbData);
         console.log(apiData.body);
         expect(apiData.body).to.have.length(dbData.length);
       });
@@ -50,7 +85,9 @@ describe('tags routers', function () {
         chai
           .request(app)
           .get('/api/tags')
+          .set('Authorization', `Bearer ${token}`)
           .then(res => {
+            console.log(res.body);
             expect(res).to.have.status(200);
             expect(res).to.be.json;
             expect(res.body).to.be.a('array');
@@ -63,14 +100,14 @@ describe('tags routers', function () {
 
             resTag = res.body[0];
             //2. then call the database to retrieve the new document
-            return Tag.findById(resTag.id);
+            return Tag.find({'userId': user.id});
           })
         //3. then compare the API response to the database results
           .then(tag => {
-            expect(resTag.id).to.equal(tag.id);
-            expect(resTag.name).to.equal(tag.name);
-            expect(new Date(resTag.createdAt)).to.eql(tag.createdAt);
-            expect(new Date(resTag.updatedAt)).to.eql(tag.createdAt);
+            expect(resTag.id).to.equal(tag[0].id);
+            expect(resTag.name).to.equal(tag[0].name);
+            expect(new Date(resTag.createdAt)).to.eql(tag[0].createdAt);
+            expect(new Date(resTag.updatedAt)).to.eql(tag[0].createdAt);
           })
       );
     }); 
@@ -86,7 +123,7 @@ describe('tags routers', function () {
           expect(tag).to.be.a('object');
           //expect(tag).to.include.keys('name');
           //expect(tag).to.have.a.lengthOf(1);
-          return chai.request(app).get(`/api/tags/${tag.id}`);
+          return chai.request(app).get(`/api/tags/${tag.id}`).set('Authorization', `BEARER ${token}`)
         }).then((res) => {
           expect(res.body.id).to.eql(tag.id);
           expect(res.body).to.include.keys('name');
@@ -102,7 +139,7 @@ describe('tags routers', function () {
         name: 'bob'
       };
       let data;
-      return chai.request(app).post('/api/tags').send(newTag)
+      return chai.request(app).post('/api/tags').send(newTag).set('Authorization', `BEARER ${token}`)
         .then(res => {
           data = res;
           expect(res).to.have.status(201);
@@ -124,13 +161,13 @@ describe('tags routers', function () {
       };
       let data;
       //1. First, call the database
-      return Tag.findOne()
+      return Tag.findOne({'userId': user.id})
         .then(tag => {
           newTagObj.id = tag.id;
-          return chai.request(app).put(`/api/tags/${tag.id}`).send(newTagObj, {new: true});
+          return chai.request(app).put(`/api/tags/${tag.id}`).set('Authorization', `BEARER ${token}`).send(newTagObj, {new: true})
         }).then(response => {
           expect(response).to.have.status(201);
-          return Tag.findById(newTagObj.id);
+          return Tag.findOne({'userId': user.id, 'name': 'pooprift'});
         }).then(endObjTag => {
           expect(endObjTag.name).to.be.eql(newTagObj.name);
           expect(endObjTag.id).to.be.eql(newTagObj.id);
@@ -146,14 +183,13 @@ describe('tags routers', function () {
         return Tag.findOne()
           .then(tag => {
             oldTag = tag;
-            return chai.request(app).delete(`/api/tags/${tag.id}`);
+            return chai.request(app).delete(`/api/tags/${tag.id}`).set('Authorization', `BEARER ${token}`);
           }).then(res => {
             expect(res).to.have.status(204);
             return Tag.findById(oldTag.id);
           });
       }); 
     });
-
   });
 });
 
