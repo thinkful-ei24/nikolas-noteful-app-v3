@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { MONGODB_URI } = require('../config');
 const Folders = require('../models/folders');
+
 const passport = require('passport');
 router.use(passport.authenticate('jwt', { session: false, failWithError: true })); //Use the jwt auth on each call within router
 // GET all /folders
@@ -22,9 +23,10 @@ router.get('/',  (req, res, next) => {
 // Conditionally return a 200 response or a 404 Not Found
 
 router.get('/:id', (req, res, next) => {
-  const { id } = req.params;
+  const { id, } = req.params;
+  const userId = req.user.id;
   if (mongoose.Types.ObjectId.isValid(id)) {
-    return Folders.findById(id)
+    return Folders.findOne({id, userId})
       .then(folder => {
         res.status(200).json(folder);
       }).catch(err => {
@@ -44,13 +46,18 @@ router.get('/:id', (req, res, next) => {
 
 router.post('/', (req, res, next) => {
   const { name } = req.body;
-
+  const userId = req.user.id;
+  
+  const newObj = req.body;
+  newObj.userId = userId;
   if(!(name)) {
     res.status(404).json('There is no name in the request body!');
   }
 
+  
+
   if(name) {
-    return Folders.create(req.body)
+    return Folders.create(newObj)
       .then(newFolder => {
         res.location(`${res.originalUrl}/${newFolder.id}`).status(201).json(newFolder);
       }).catch(err => {
@@ -73,14 +80,14 @@ router.put('/:id', (req, res, next) => {
   const { name } = req.body;
   const { id } = req.params;
   const newUpdateValues = {name, id};
-
+  let userId = req.user.id;
   if(!(name)) {
     res.status(404).json('There is no name in the request body!');
   }
 
   if(name && mongoose.Types.ObjectId.isValid(id)) {
       
-    return Folders.findOneAndUpdate({_id: id}, newUpdateValues, {new: true})
+    return Folders.findOneAndUpdate({_id: id, userId}, newUpdateValues, {new: true})
       .then(obj => {
         res.location(`${res.originalUrl}/${obj.id}`).status(201).json(obj);
       }).catch(err => {
@@ -98,9 +105,9 @@ router.put('/:id', (req, res, next) => {
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
-
+  const userId = req.user.id;
   if(mongoose.Types.ObjectId.isValid(id)) {
-    return Folders.findByIdAndRemove({_id: id})
+    return Folders.findOneAndRemove({_id: id, userId})
       .then(response => {
         res.status(204).json(response);
       });

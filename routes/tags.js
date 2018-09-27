@@ -9,7 +9,9 @@ router.use(passport.authenticate('jwt', { session: false, failWithError: true })
 // Sort the response by name
 router.get('/', (req, res, next) => {
   console.log('hi');
-  return Tag.find().sort('-name')
+  const userId = req.user.id;
+  console.log(userId);
+  return Tag.find({userId}).sort('-name')
     .then(response => {
       return res.json(response);
     }).catch((err) => {
@@ -23,9 +25,10 @@ router.get('/', (req, res, next) => {
 
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
   if(mongoose.Types.ObjectId.isValid(id)) {
-    return Tag.findById({_id: id})
+    return Tag.findById({_id: id, userId})
       .then(response => {
         return res.status(200).json(response);
       }).catch((err) => {
@@ -42,10 +45,14 @@ router.get('/:id', (req, res, next) => {
 
 router.post('/', (req, res, next) => {
 
+
+  let object = req.body;
+  const userId = req.user.id;
+  object.userId = userId;
   if(!(req.body.name)) {
     res.status(404).json('There is no name in the field');
   }
-  return Tag.create(req.body)
+  return Tag.create(object)
     .then(response => {
       return res.location(`${response.originalUrl}/${response.id}`).status(201).json(response);
     }).catch((err) => {
@@ -62,6 +69,8 @@ router.post('/', (req, res, next) => {
 
 router.put('/:id', (req, res, next) => {
 
+  const userId = req.user.id;
+
   if(!(req.body.name)) {
     const err = new Error('Name is invalid');
     err.status = 404;
@@ -74,7 +83,7 @@ router.put('/:id', (req, res, next) => {
     next(err);
   }
     
-  return Tag.findByIdAndUpdate({_id: req.params.id}, req.body, {new: true})
+  return Tag.findOne({_id: req.params.id, userId}, req.body, {new: true})
     .then(response => {
       res.status(201).json(response);
     }).catch(err => {
@@ -89,6 +98,8 @@ router.put('/:id', (req, res, next) => {
 // Add condition that checks the result and returns a 200 response with the result or a 204 status
 
 router.delete('/:id', (req, res, next) => {
+  const userId = req.user.id;
+
   if(!(mongoose.Types.ObjectId.isValid(req.params.id))) {
     const err = new Error('Id is invalid');
     err.status = 404;

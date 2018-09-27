@@ -9,9 +9,9 @@ router.post('/', (req,res,next) => {
 
   console.log(req.body);
 
-  const {username, password, firstName, lastName} = req.body;
-  let fullname;
+  const {username, password, fullname } = req.body;
 
+  let trimName;
   
 
   const requiredFields = ['username', 'password'];
@@ -20,7 +20,13 @@ router.post('/', (req,res,next) => {
   if (missingField) {
     const err = new Error(`Missing '${missingField}' in request body`);
     err.status = 422;
-    return next(err);
+    next(err);
+  }
+
+  if(typeof username === 'number' || typeof password === 'number') {
+    const err = new Error('Username or Password cannot only be numbers!');
+    err.status = 422;
+    next(err);
   }
 
   if(username.trim() !== username || password.trim() !== password) {
@@ -35,15 +41,15 @@ router.post('/', (req,res,next) => {
     next(err);
   }
 
-  if(password < 8 || password > 72) {
+  if(password.length < 8 || password.length > 72) {
     const err = new Error('Password does not meet required length. (At least 8 characters and no more than 72)');
     err.status = 404;
     next(err);
   }
 
 
-  if(firstName && lastName) {
-    fullname = `${firstName} ${lastName}`;
+  if(fullname) {
+    trimName = fullname.trim();
   }
   
   return User.hashPassword(password)
@@ -51,7 +57,7 @@ router.post('/', (req,res,next) => {
       const newUser = {
         username,
         password: digest,
-        fullname
+        fullname: trimName
       };
       console.log(newUser);
       return User.create(newUser);
