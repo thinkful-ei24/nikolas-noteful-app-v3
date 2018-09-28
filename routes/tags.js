@@ -23,6 +23,9 @@ router.get('/', (req, res, next) => {
 // Add validation that protects against invalid Mongo ObjectIds and prevents unnecessary database queries.
 // Add condition that checks the result and returns a 200 response with the result or a 404 Not Found
 
+
+
+
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
   const userId = req.user.id;
