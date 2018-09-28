@@ -11,7 +11,7 @@ router.use(passport.authenticate('jwt', { session: false, failWithError: true })
 
 
 const validateFolderId = function(folderId, userId) {
-  if(!(folderId)) {
+  if(!(folderId) || folderId === '') {
     return Promise.resolve();
   }
   if(folderId) {
@@ -35,6 +35,28 @@ const validateFolderId = function(folderId, userId) {
   }  
 };
 
+const validateTagsId1 = function(req, res, next) {
+
+  let { tags } = req.body 
+  let userId = req.user.id;
+  if(!(tags)) {
+    return next();
+  }  
+  
+  if(tags) {
+    return tags.forEach(tag =>{
+      if(!mongoose.Types.ObjectId.isValid(tag.id)) {
+        const err = new Error('Bad tag!');
+        err.status = 404;
+        return next(err);
+      }
+    })
+    .then(() => {
+        Tag.find({$in: {}})
+    })
+  }
+}
+
 const validateTagsId = function(tags, userId) {
   if(!(tags)) {
     return Promise.resolve();
@@ -57,6 +79,7 @@ const validateTagsId = function(tags, userId) {
 
       Tag.find({_id: {$in: tags}, userId}).count()
         .then(tagCount => {
+          console.log(tagCount);
           if(tagCount !== tags.length) {
             const err = new Error('An id in `tags` does not exist.');
             err.status = 404;
@@ -94,7 +117,7 @@ router.get('/', (req, res, next) => {
     filter.tags = tagId ;
   }
   
-  console.log(filter.userId);
+  console.log(filter);
 
   return Note.find(filter).populate('tags').sort({ updatedAt: 'desc' })
     .then(results => {

@@ -10,7 +10,10 @@ router.use(passport.authenticate('jwt', { session: false, failWithError: true })
 // Sort by name
 
 router.get('/',  (req, res, next) => {
-  return Folders.find().sort({'name': 1})
+
+  const userId = req.user.id;
+
+  return Folders.find({userId}).sort({'name': 1})
     .then((folders) => {
       res.status(200).json(folders);
     }).catch(err => {
