@@ -7,6 +7,8 @@ const Note = require('../models/note');
 const Folders = require('../models/folders');
 const Tag = require('../models/tags');
 const passport = require('passport');
+// const validators = require('../validators/validation');
+
 router.use(passport.authenticate('jwt', { session: false, failWithError: true })); 
 
 
@@ -35,27 +37,7 @@ const validateFolderId = function(folderId, userId) {
   }  
 };
 
-const validateTagsId1 = function(req, res, next) {
 
-  let { tags } = req.body 
-  let userId = req.user.id;
-  if(!(tags)) {
-    return next();
-  }  
-  
-  if(tags) {
-    return tags.forEach(tag =>{
-      if(!mongoose.Types.ObjectId.isValid(tag.id)) {
-        const err = new Error('Bad tag!');
-        err.status = 404;
-        return next(err);
-      }
-    })
-    .then(() => {
-        Tag.find({$in: {}})
-    })
-  }
-}
 
 const validateTagsId = function(tags, userId) {
   if(!(tags)) {
@@ -161,12 +143,19 @@ router.post('/', (req, res, next) => {
   let newObj = req.body;
   const userId = req.user.id;
   const tags = req.body.tags;
-  const folderId = req.body.folderId;
+  let folderId;
   newObj.userId = userId;
+
+  console.log(req.body);
+
+  if(req.body.folderId === "") 
+  {
+    delete req.body.folderId;
+  }
 
   console.log(userId);
   // console.log(tags);
-   
+  console.log(folderId);
   return Promise.all([
     validateFolderId(folderId, userId),
     validateTagsId(tags, userId)
@@ -181,6 +170,15 @@ router.post('/', (req, res, next) => {
       console.error(`ERROR: ${err.message}`);
       return next(err);
     });  
+  // return Note.create(newObj)
+  //   .then(results => {
+  //     res.status(201).json(results);
+  //   })
+  //   .catch(err => {
+  //     console.error(`ERROR: ${err.message}`);
+  //     return next(err);
+  //   }); 
+  
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
@@ -194,6 +192,12 @@ router.put('/:id', (req, res, next) => {
   newObj.userId = userId;
 
   console.log(tags);
+
+  if(req.body.folderId === "") 
+  {
+    delete req.body.folderId;
+  }
+
 
   return Promise.all([
     validateFolderId(folderId, userId),
@@ -216,7 +220,7 @@ router.delete('/:id', (req, res, next) => {
   const id = req.params.id;
   const userId = req.user.id;
 
-  return Note.deleteOne({id, userId}) 
+  return Note.deleteOne({"_id": id, userId}) 
     .then(res.status(204).end())
     .catch(err => {
       console.error(`ERROR: ${err.message}`);

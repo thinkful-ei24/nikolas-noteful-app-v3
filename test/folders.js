@@ -67,7 +67,7 @@ describe('Notes API Resource', function() {
   describe('GET /api/folders', function () {
     it('should get all folders', function () {
       return Promise.all([
-        Folder.find(),
+        Folder.find({userId: user.id}),
         chai.request(app).get('/api/folders').set('Authorization', `Bearer ${token}`)
       ]).then(([data, res]) => {
         expect(data[0]).to.be.a('object');

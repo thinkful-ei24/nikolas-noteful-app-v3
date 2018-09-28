@@ -29,7 +29,10 @@ app.use(express.static('public'));
 
 // Parse request body
 app.use(express.json());
-
+app.use((req,res,next) => {
+  console.log("I am here", req.body);
+  next();
+});
 // Mount routers
 app.use('/api/folders', foldersRouter);
 app.use('/api/tags', tagsRouter);

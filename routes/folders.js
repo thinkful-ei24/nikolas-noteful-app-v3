@@ -71,7 +71,6 @@ router.post('/', (req, res, next) => {
         next(err);
       });
   }
-
 });
 
 // PUT /folders by id to update a folder name

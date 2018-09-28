@@ -109,7 +109,7 @@ router.delete('/:id', (req, res, next) => {
     next(err);
   }
   
-  return Tag.findByIdAndRemove({_id: req.params.id})
+  return Tag.findByIdAndRemove({_id: req.params.id, userId}) //TEST
     .then(response => {
       res.status(204).json(response);
     }).catch(err => {

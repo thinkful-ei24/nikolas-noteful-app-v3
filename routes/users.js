@@ -7,10 +7,11 @@ const User = require('../models/user');
 
 router.post('/', (req,res,next) => {
 
-  console.log(req.body);
+  
 
   const {username, password, fullname } = req.body;
-
+  console.log(username);
+  console.log(req.body);
   let trimName;
   
 
