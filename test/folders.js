@@ -147,11 +147,13 @@ describe('Notes API Resource', function() {
     });
   });
 
+  //hello
+
   describe('DELETE /api/folders/:id', function () {
     it('should delete a folder by id', function () {
       let id;
       let object;
-      return Folder.findOne()
+      return Folder.findOne({})
         .then(obj => {
           object = obj;
           id = obj.id;
